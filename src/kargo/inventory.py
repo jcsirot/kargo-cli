@@ -170,6 +170,27 @@ class CfgInventory(object):
                         {'hostname': '%s' % host['name'],
                          'hostvars': []}
                     )
+        elif self.platform == 'vagrant':
+            for host in instances:
+                new_inventory['all']['hosts'].append(
+                    {'hostname': '%s' % host['name'], 'hostvars': [
+                        {'name': 'ansible_ssh_host', 'value': host['ip']}
+                        ]}
+                )
+                new_inventory['kube-node']['hosts'].append(
+                    {'hostname': '%s' % host['name'],
+                     'hostvars': []}
+                )
+            for host in k8s_masters:
+                new_inventory['kube-master']['hosts'].append(
+                    {'hostname': '%s' % host['name'],
+                     'hostvars': []}
+                )
+            for host in etcd_members:
+                new_inventory['etcd']['hosts'].append(
+                    {'hostname': '%s' % host['name'],
+                     'hostvars': []}
+                )
         elif self.platform == 'metal':
             for host in instances:
                 r = re.search('(^.*)\[(.*)\]', host)

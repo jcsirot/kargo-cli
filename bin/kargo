@@ -30,6 +30,7 @@ from kargo.configure import Config
 from kargo.inventory import CfgInventory
 from kargo.deploy import RunPlaybook
 from kargo.cloud import AWS, GCE, OpenStack
+from kargo.vagrant import Vagrant
 display = Display()
 
 
@@ -54,7 +55,6 @@ def gce(options):
     G.create_instances()
     G.write_inventory()
 
-
 def openstack(options):
     clone_kargo_git_repo(options)
     O = OpenStack(options)
@@ -62,6 +62,13 @@ def openstack(options):
     O.create_instances()
     O.write_inventory()
 
+def vagrant(options):
+    options["add_node"] = False
+    clone_kargo_git_repo(options)
+    V = Vagrant(options)
+    V.gen_vagrantfile()
+    V.create_instances()
+    V.write_inventory()
 
 def deploy(options):
     Run = RunPlaybook(options)
@@ -246,6 +253,33 @@ if __name__ == '__main__':
         '--cluster-name', dest='cluster_name', help='Name of the cluster'
     )
     openstack_parser.set_defaults(func=openstack)
+
+    # vagrant
+    vagrant_parser = subparsers.add_parser(
+        'vagrant', parents=[parent_parser, firststep_parser],
+         help='Create VirtualBox VM with Vagrant and generate inventory'
+    )
+
+    vagrant_parser.add_argument(
+        '--public-key', dest='ssh_public_key', default="~/.ssh/id_rsa.pub",
+        help='ssh public key for authentication on hosts'
+    )
+    vagrant_parser.add_argument(
+        '--private-key', dest='ssh_private_key', default="~/.ssh/id_rsa",
+        help='ssh private key for authentication on hosts'
+    )
+    vagrant_parser.add_argument(
+        '--box', dest='box', required=True,
+        help='Vagrant box to be install'
+    )
+    vagrant_parser.add_argument(
+        '--network', dest='network', default='192.168.50.0/24',
+        help='The private network used by the VM (default: 192.168.50.0/24)'
+    )
+    vagrant_parser.add_argument(
+        '--instances', dest='count', type=int,
+        help='Number of nodes', required=True)
+    vagrant_parser.set_defaults(func=vagrant)
 
     # deploy
     deploy_parser = subparsers.add_parser(
